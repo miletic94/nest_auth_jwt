@@ -12,7 +12,7 @@ export class UserService {
 
     async getAll() {
         return await this.userRepo.createQueryBuilder('user')
-        .leftJoinAndSelect('user.password', 'user_auth')
+        .leftJoinAndSelect('user.user_auth', 'user_auth')
         .getMany();
     }
 

@@ -14,7 +14,7 @@ export class User extends BaseEntity {
 
     @OneToOne(() => UserAuth, userAuth => userAuth.user)
     @JoinColumn()
-    password: string
+    user_auth: string
 
     @CreateDateColumn({ type: 'timestamp'})
     created_date: Date 

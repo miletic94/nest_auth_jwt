@@ -12,7 +12,7 @@ export class UserAuth extends BaseEntity  {
     @Column()
     password: string
 
-    @OneToOne(() => User, user => user.password, {onDelete: 'CASCADE'})
+    @OneToOne(() => User, user => user.user_auth, {onDelete: 'CASCADE'})
     user: User
 
     @BeforeInsert()
