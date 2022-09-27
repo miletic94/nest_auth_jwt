@@ -12,11 +12,6 @@ export class UserController {
         return this.userService.getAll()
     }
 
-    @Post('user')
-    createUser() {
-        return this.userService.create()
-    }
-
     @Patch('user')
     updateUser() {
         return this.userService.update()
