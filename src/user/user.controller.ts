@@ -11,7 +11,7 @@ export class UserController {
     getAllUsers() {
         return this.userService.getAll()
     }
-
+    
     @Patch('user')
     updateUser() {
         return this.userService.update()

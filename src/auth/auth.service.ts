@@ -4,6 +4,7 @@ import { UserService } from 'src/user/user.service';
 import { Repository } from 'typeorm';
 import { RegisterDto } from './dto/register.dto';
 import { UserAuth } from './entity/user-auth.entity';
+import * as bcrypt from 'bcrypt'
 
 @Injectable()
 export class AuthService {
@@ -11,6 +12,17 @@ export class AuthService {
         @InjectRepository(UserAuth) private userAuthRepo: Repository<UserAuth>,
         private readonly userService: UserService
     ) {}
+
+    async validateUser(email: string, password: string): Promise<any> {
+        const user = await this.userService.getOneByEmailWithPassword(email);
+        const hashedPassword = user.user_auth['password'] // Manage differently
+        const isValid = await bcrypt.compare(password, hashedPassword)
+        if (isValid) {
+            const {user_auth, ...result} = user
+            return result;
+        }
+        return null;
+      }
 
     async register(newUser: RegisterDto) {
         const { password } = newUser
@@ -23,6 +35,6 @@ export class AuthService {
     }
 
     login() {
-        return {res: 'logging in'}
+        return
     }
 }
