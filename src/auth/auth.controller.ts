@@ -6,7 +6,6 @@ import { GetCurrentUser } from "./decorator/get-current-user.decorator";
 import { Public } from "./decorator/public.decorator";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
-import { UserAuth } from "./entity/user-auth.entity";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
 import { RefreshTokenGuard } from "./guards/refresh-token.guard";
 

@@ -45,6 +45,9 @@ export class UserService {
 
     async create(user: UserDto) {
         const { name, email} = user
+        const alreadyUser = await this.userRepo.findOne({where: {email}})
+        if (alreadyUser) throw new HttpException('User with this email already exists.', HttpStatus.BAD_REQUEST)
+          
         const tempUser = this.userRepo.create({name, email})
         const dbUser = await this.userRepo.save(tempUser)
         return dbUser
