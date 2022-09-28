@@ -1,7 +1,8 @@
-import { BaseEntity, BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn,  } from "typeorm";
 import * as bcrypt from 'bcrypt'
-import { InternalServerErrorException } from "@nestjs/common";
+import { InternalServerErrorException, HttpException, HttpStatus } from "@nestjs/common";
 import { User } from "../../user/entity/user.entity";
+import { MinLength } from "class-validator";
 
 @Entity()
 export class UserAuth extends BaseEntity  {
@@ -23,6 +24,9 @@ export class UserAuth extends BaseEntity  {
     @BeforeUpdate()
     async hashPassword(): Promise<void> {
         if (this.password) {
+            if(this.password.length < 8) {
+                throw new HttpException('Password must be at least 8 charachters long', HttpStatus.BAD_REQUEST)
+            }
             try {
                 this.password = this.password.length < 60 ? await bcrypt.hash(this.password, 10) : this.password
             } catch(error) {

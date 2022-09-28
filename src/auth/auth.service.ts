@@ -1,7 +1,7 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserService } from 'src/user/user.service';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { RegisterDto } from './dto/register.dto';
 import { UserAuth } from './entity/user-auth.entity';
 import * as bcrypt from 'bcrypt';
@@ -15,6 +15,7 @@ export class AuthService {
     @InjectRepository(UserAuth) private userAuthRepo: Repository<UserAuth>,
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly dataSource: DataSource,
     ) {}
 
   async getTokens(payload: JwtPayload) {
@@ -78,15 +79,31 @@ export class AuthService {
 
   async register(newUser: RegisterDto) {
     const { password } = newUser;
-    const user = await this.userService.create({
-      name: newUser.name,
-      email: newUser.email,
-    });
-    if (user) {
-      const tempPass = this.userAuthRepo.create({ password, user });
-      await this.userAuthRepo.save(tempPass);
-      return user;
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    queryRunner.connect();
+    queryRunner.startTransaction();
+    try {
+      let user
+      const tempUser = await this.userService.create({
+        name: newUser.name,
+        email: newUser.email,
+      });
+      if (tempUser) {
+        user = await queryRunner.manager.save(tempUser);
+        const tempPass = this.userAuthRepo.create({ password, user });
+        await queryRunner.manager.save(tempPass);
+      }
+
+      await queryRunner.commitTransaction();
+      return user
+    } catch (error) {
+      await queryRunner.rollbackTransaction()
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+    } finally {
+      await queryRunner.release();
     }
+
   }
 
   async login(user: User) {
