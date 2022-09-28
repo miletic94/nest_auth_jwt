@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { User } from "src/user/entity/user.entity";
 import { AuthService } from "./auth.service";
 import { GetCurrentUser } from "./decorator/get-current-user.decorator";
+import { Public } from "./decorator/public.decorator";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { UserAuth } from "./entity/user-auth.entity";
@@ -16,6 +17,7 @@ import { RefreshTokenGuard } from "./guards/refresh-token.guard";
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
+    @Public()
     @Post('/auth/register')
     register(@Body() registerBody: RegisterDto) {
         const user = this.authService.register(registerBody);
@@ -27,6 +29,7 @@ export class AuthController {
           }
     }
 
+    @Public()
     @UseGuards(LocalAuthGuard)
     @Post('auth/login')
     login(
@@ -37,6 +40,7 @@ export class AuthController {
         return this.authService.login(user)
     }
 
+    @Public()
     @UseGuards(RefreshTokenGuard)
     @Post('auth/refresh')
     async refreshTokens(
