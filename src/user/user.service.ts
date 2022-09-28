@@ -10,29 +10,37 @@ export class UserService {
         @InjectRepository(User) private userRepo: Repository<User>
     ) {}
 
-    async getOneByEmail(email: string) {
-        const user = await this.userRepo.find({where: {email}})
+
+    async getOne(id: string): Promise<User> {
+        const user = await this.userRepo.findOne({where: {id}})
+        if (!user) {
+          throw new HttpException('Users not found', HttpStatus.NOT_FOUND)
+        }
+        return user
+      }
+
+    async getOneByEmail(email: string): Promise<User> {
+        const user = await this.userRepo.findOne({where: {email}})
         if(!user) {
             throw new HttpException(`User with that email couldn't be found`, HttpStatus.BAD_REQUEST)
         }
         return user
     }
 
-    async getOneByEmailWithPassword(email: string) {
+    async getOneWithCredentialsBy(property: string, value: string) {
         const user = await this.userRepo
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.user_auth', 'user_auth')
+        .where({[property]: value})
         .getOne()
         if(!user) {
-            throw new HttpException(`User with that email couldn't be found`, HttpStatus.BAD_REQUEST)
+            throw new HttpException(`User with that ${property} couldn't be found`, HttpStatus.BAD_REQUEST)
         }
         return user
     }
 
-    async getAll() {
-        return await this.userRepo.createQueryBuilder('user')
-        .leftJoinAndSelect('user.user_auth', 'user_auth')
-        .getMany();
+    async getAll(): Promise<User[]> {
+        return await this.userRepo.find()
     }
 
     async create(user: UserDto) {

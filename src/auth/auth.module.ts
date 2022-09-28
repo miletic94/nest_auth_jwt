@@ -8,19 +8,16 @@ import { AuthService } from "./auth.service";
 import { UserAuth } from "./entity/user-auth.entity";
 import { PassportModule } from "@nestjs/passport"
 import { LocalStrategy } from './strategy/local.strategy'
-import { JwtModule } from "@nestjs/jwt";
 import { JwtStrategy } from "./strategy/jwt.strategy";
+import { RefreshTokenStrategy } from "./strategy/jwt-refresh.strategy";
+import { JwtService } from "@nestjs/jwt";
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([UserAuth, User]),
         PassportModule,
-        JwtModule.register({
-          secret: process.env.JWT_ACCESS_TOKEN_SECRET,
-          signOptions: { expiresIn: '15m' },
-        }),
     ],
-    providers: [AuthService, UserService, LocalStrategy, JwtStrategy],
+    providers: [AuthService, UserService, JwtService, LocalStrategy, JwtStrategy, RefreshTokenStrategy],
     controllers: [AuthController]
 })
 export class AuthModule {}

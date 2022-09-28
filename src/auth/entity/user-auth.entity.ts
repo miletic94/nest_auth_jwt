@@ -12,6 +12,9 @@ export class UserAuth extends BaseEntity  {
     @Column()
     password: string
 
+    @Column({nullable: true})
+    refreshToken: string
+
     @OneToOne(() => User, user => user.user_auth, {onDelete: 'CASCADE'})
     user: User
 
@@ -27,6 +30,3 @@ export class UserAuth extends BaseEntity  {
         }
     }
 }
-
-const u = new UserAuth
-console.log(u);

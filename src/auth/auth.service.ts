@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserService } from 'src/user/user.service';
 import { Repository } from 'typeorm';
@@ -7,6 +7,7 @@ import { UserAuth } from './entity/user-auth.entity';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/user/entity/user.entity';
+import { JwtPayload } from './interface/user-jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -14,15 +15,63 @@ export class AuthService {
     @InjectRepository(UserAuth) private userAuthRepo: Repository<UserAuth>,
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
-  ) {}
+    ) {}
+
+  async getTokens(payload: JwtPayload) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(
+        {
+          sub: payload.sub,
+          name: payload.username,
+        },
+        {
+          secret: process.env.JWT_ACCESS_TOKEN_SECRET,
+          expiresIn: process.env.JWT_ACCESS_TOKEN_EXP_TIME,
+        },
+      ),
+      this.jwtService.signAsync(
+        {
+          sub: payload.sub,
+          name: payload.username,
+        },
+        {
+          secret: process.env.JWT_REFRESH_TOKEN_SECRET,
+          expiresIn: process.env.JWT_REFRESH_TOKEN_EXP_TIME,
+        },
+      ),
+    ]);
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
+  }
+
+  async updateRefreshToken(userAuthId: string, refreshToken: string) {
+    console.log({userAuthId});
+    return this.userAuthRepo.update(
+      { id: userAuthId },
+      {
+        refreshToken,
+      }
+    )
+  }
+
+  // async deleteRefreshToken(userId: string) {
+  //   return this.userRepo.update(
+  //     { id: userId },
+  //     {
+  //       refreshToken: null,
+  //     }
+  //   )
+  // }
+
 
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userService.getOneByEmailWithPassword(email);
+    const user = await this.userService.getOneWithCredentialsBy('email', email);
     const hashedPassword = user.user_auth['password']; // Manage differently
     const isValid = await bcrypt.compare(password, hashedPassword);
     if (isValid) {
-      const { user_auth, ...result } = user;
-      return result;
+      return user;
     }
     return null;
   }
@@ -41,9 +90,38 @@ export class AuthService {
   }
 
   async login(user: User) {
-    const payload = { username: user.name, sub: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    const payload: JwtPayload = { username: user.name, sub: user.id };
+    const userAuthId = user.user_auth['id']
+    const tokens = await this.getTokens(payload);
+    await this.updateRefreshTokenHash(userAuthId, tokens.refresh_token);
+    return tokens;
   }
-}
+
+  // async logout(userId: string) {
+  //   await this.userService.deleteRefreshToken(userId);
+  // }
+
+  async updateRefreshTokenHash(userAuthId: string, refreshToken: string) {
+    const hash = await bcrypt.hash(refreshToken, 10);
+    await this.updateRefreshToken(userAuthId, hash);
+  }
+
+  async refreshTokens(userId: string, refreshToken: string) {
+    const user = await this.userService.getOneWithCredentialsBy('id', userId);
+    if (!user) throw new ForbiddenException('Access Denied');
+    console.log({user})
+    if (!user.user_auth['refreshToken']) throw new ForbiddenException('No refresh token in db');
+
+    const refreshTokenMathces = bcrypt.compare(refreshToken, user.user_auth['refreshToken']);
+
+    if (!refreshTokenMathces) throw new ForbiddenException('Access Denied');
+
+    const payload = { 
+      username: user.name, 
+      sub: user.id, 
+    };
+    const tokens = await this.getTokens(payload);
+    await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
+    return tokens;
+  }
+} 

@@ -12,7 +12,7 @@ export class User extends BaseEntity {
     @Column({ unique: true})
     email: string
 
-    @OneToOne(() => UserAuth, userAuth => userAuth.user)
+    @OneToOne(() => UserAuth, userAuth => userAuth.user, {onDelete: 'CASCADE'})
     @JoinColumn()
     user_auth: string
 
