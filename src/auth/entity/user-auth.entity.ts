@@ -16,6 +16,7 @@ export class UserAuth extends BaseEntity  {
     refreshToken: string
 
     @OneToOne(() => User, user => user.user_auth, {onDelete: 'CASCADE'})
+    @JoinColumn()
     user: User
 
     @BeforeInsert()

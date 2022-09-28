@@ -12,8 +12,7 @@ export class User extends BaseEntity {
     @Column({ unique: true})
     email: string
 
-    @OneToOne(() => UserAuth, userAuth => userAuth.user, {onDelete: 'CASCADE'})
-    @JoinColumn()
+    @OneToOne(() => UserAuth, userAuth => userAuth.user)
     user_auth: string
 
     @CreateDateColumn({ type: 'timestamp'})
