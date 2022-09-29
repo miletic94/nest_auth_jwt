@@ -1,6 +1,7 @@
 import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
 import { User } from './entity/user.entity';
 
@@ -14,7 +15,7 @@ export class UserService {
     async getOne(id: string): Promise<User> {
         const user = await this.userRepo.findOne({where: {id}})
         if (!user) {
-          throw new HttpException('Users not found', HttpStatus.NOT_FOUND)
+          throw new HttpException('User not found', HttpStatus.NOT_FOUND)
         }
         return user
       }
@@ -52,11 +53,22 @@ export class UserService {
         return this.userRepo.create({name, email})
     }
 
-    update() {
-        return {res: 'updating'}
+    async update(userId: string, updateUserData: UpdateUserDto) {
+        await this.userRepo.update(
+            {id: userId},
+            {name: updateUserData.name}
+        )
+        return this.getOne(userId)
     }
 
-    delete() {
-        return {res: 'deleting'}
+    async delete(id: string) {
+        try {
+            const user = await this.getOne(id);
+            await this.userRepo.delete(id)
+            return {message: 'Resource deleted successfully!'}
+        } catch(error) {
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+        }
+
     }
 }

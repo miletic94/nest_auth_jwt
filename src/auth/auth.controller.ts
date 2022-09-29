@@ -51,7 +51,6 @@ export class AuthController {
     
     @Post('auth/logout') 
     async logout(@GetCurrentUser('userId') userId: string) {
-      console.log({userId})
       return await this.authService.deleteRefreshToken(userId)
     }
 }
