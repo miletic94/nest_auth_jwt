@@ -126,7 +126,6 @@ export class AuthService {
     if (!user.user_auth['refreshToken']) throw new ForbiddenException('Logged out. No refresh token in db');
 
     const refreshTokenMatches = await bcrypt.compare(refreshToken, user.user_auth['refreshToken']);
-    console.log({refreshTokenMatches})
     if (!refreshTokenMatches) throw new ForbiddenException(`Refresh tokens doesn't match.`);
 
     const payload = { 
