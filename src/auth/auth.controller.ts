@@ -1,4 +1,4 @@
-import {Controller, Post, Body, HttpException, HttpStatus, UseGuards, Request} from "@nestjs/common";
+import {Controller, Post, Delete, Body, HttpException, HttpStatus, UseGuards, Request} from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { User } from "src/user/entity/user.entity";
 import { AuthService } from "./auth.service";
@@ -46,7 +46,12 @@ export class AuthController {
       @GetCurrentUser('sub') userId: string,
       @GetCurrentUser('refreshToken') refreshToken: string
     ) {
-      console.log({userId});
       return await this.authService.refreshTokens(userId, refreshToken)
+    }
+    
+    @Post('auth/logout') 
+    async logout(@GetCurrentUser('userId') userId: string) {
+      console.log({userId})
+      return await this.authService.deleteRefreshToken(userId)
     }
 }

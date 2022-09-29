@@ -47,26 +47,6 @@ export class AuthService {
     };
   }
 
-  async updateRefreshToken(userAuthId: string, refreshToken: string) {
-    console.log({userAuthId});
-    return this.userAuthRepo.update(
-      { id: userAuthId },
-      {
-        refreshToken,
-      }
-    )
-  }
-
-  // async deleteRefreshToken(userId: string) {
-  //   return this.userRepo.update(
-  //     { id: userId },
-  //     {
-  //       refreshToken: null,
-  //     }
-  //   )
-  // }
-
-
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userService.getOneWithCredentialsBy('email', email);
     const hashedPassword = user.user_auth['password']; // Manage differently
@@ -114,31 +94,55 @@ export class AuthService {
     return tokens;
   }
 
-  // async logout(userId: string) {
-  //   await this.userService.deleteRefreshToken(userId);
-  // }
+  async logout(userId: string) {
+    await this.deleteRefreshToken(userId);
+  }
 
-  async updateRefreshTokenHash(userAuthId: string, refreshToken: string) {
-    const hash = await bcrypt.hash(refreshToken, 10);
-    await this.updateRefreshToken(userAuthId, hash);
+  async deleteRefreshToken(userId: string) {
+    const user = await this.userService.getOneWithCredentialsBy('id', userId);
+    const userAuthId = user.user_auth['id']
+    const userAuth = await this.userAuthRepo.findOne({where: {id: userAuthId}})
+    if(!userAuth) throw new HttpException(`User auth with that id doesn't exist`, HttpStatus.BAD_REQUEST) 
+    if(userAuth.refreshToken == null) throw new HttpException(`Refresh token already null`, HttpStatus.BAD_REQUEST)
+    return this.userAuthRepo.update(
+      { id: userAuthId },
+      {
+        refreshToken: null,
+      }
+    )
   }
 
   async refreshTokens(userId: string, refreshToken: string) {
     const user = await this.userService.getOneWithCredentialsBy('id', userId);
-    if (!user) throw new ForbiddenException('Access Denied');
-    console.log({user})
+    if (!user) throw new ForbiddenException('No such user in DB');
+
     if (!user.user_auth['refreshToken']) throw new ForbiddenException('No refresh token in db');
 
-    const refreshTokenMathces = bcrypt.compare(refreshToken, user.user_auth['refreshToken']);
+    const refreshTokenMatches = await bcrypt.compare(refreshToken, user.user_auth['refreshToken']);
 
-    if (!refreshTokenMathces) throw new ForbiddenException('Access Denied');
+    if (!refreshTokenMatches) throw new ForbiddenException('Access Denied');
 
     const payload = { 
       username: user.name, 
       sub: user.id, 
     };
     const tokens = await this.getTokens(payload);
-    await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
+    await this.updateRefreshTokenHash(user.user_auth['id'], tokens.refresh_token);
     return tokens;
+  }
+
+  async updateRefreshTokenHash(userAuthId: string, refreshToken: string) {
+    const hash = await bcrypt.hash(refreshToken, 10);
+    await this.updateRefreshToken(userAuthId, hash);
+  }
+
+  async updateRefreshToken(userAuthId: string, refreshToken: string) {
+
+    return this.userAuthRepo.update(
+      { id: userAuthId },
+      {
+        refreshToken,
+      }
+    )
   }
 } 
