@@ -32,9 +32,7 @@ export class UserController {
   }
 
   @Delete('user')
-  deleteUser(
-    @GetCurrentUser('userId') userId: string,
-  ) {
+  deleteUser(@GetCurrentUser('userId') userId: string) {
     return this.userService.delete(userId);
   }
 }

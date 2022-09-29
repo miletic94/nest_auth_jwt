@@ -1,4 +1,9 @@
-import { Injectable, ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserService } from 'src/user/user.service';
 import { DataSource, Repository } from 'typeorm';
@@ -16,7 +21,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly dataSource: DataSource,
-    ) {}
+  ) {}
 
   async getTokens(payload: JwtPayload) {
     const [accessToken, refreshToken] = await Promise.all([
@@ -64,7 +69,7 @@ export class AuthService {
     queryRunner.connect();
     queryRunner.startTransaction();
     try {
-      let user
+      let user;
       const tempUser = await this.userService.create({
         name: newUser.name,
         email: newUser.email,
@@ -76,19 +81,18 @@ export class AuthService {
       }
 
       await queryRunner.commitTransaction();
-      return user
+      return user;
     } catch (error) {
-      await queryRunner.rollbackTransaction()
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+      await queryRunner.rollbackTransaction();
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     } finally {
       await queryRunner.release();
     }
-
   }
 
   async login(user: User) {
     const payload: JwtPayload = { username: user.name, sub: user.id };
-    const userAuthId = user.user_auth['id']
+    const userAuthId = user.user_auth['id'];
     const tokens = await this.getTokens(payload);
     await this.updateRefreshToken(userAuthId, tokens.refresh_token);
     return tokens;
@@ -99,38 +103,52 @@ export class AuthService {
   }
 
   async getOneById(userAuthId: string) {
-
-    const userAuth = await this.userAuthRepo.findOne({where: {id: userAuthId}})
-    if(!userAuth) throw new HttpException(`User auth with that id doesn't exist`, HttpStatus.BAD_REQUEST) 
+    const userAuth = await this.userAuthRepo.findOne({
+      where: { id: userAuthId },
+    });
+    if (!userAuth)
+      throw new HttpException(
+        `User auth with that id doesn't exist`,
+        HttpStatus.BAD_REQUEST,
+      );
 
     return userAuth;
   }
 
   async deleteRefreshToken(userId: string) {
     const user = await this.userService.getOneWithCredentialsBy('id', userId);
-    const userAuthId = user.user_auth['id']
-    const userAuth = await this.getOneById(user.user_auth['id'])
-    if(userAuth.refreshToken == null) throw new HttpException(`Already logged out. Refresh token already null`, HttpStatus.BAD_REQUEST)
+    const userAuthId = user.user_auth['id'];
+    const userAuth = await this.getOneById(user.user_auth['id']);
+    if (userAuth.refreshToken == null)
+      throw new HttpException(
+        `Already logged out. Refresh token already null`,
+        HttpStatus.BAD_REQUEST,
+      );
     return this.userAuthRepo.update(
       { id: userAuthId },
       {
         refreshToken: null,
-      }
-    )
+      },
+    );
   }
 
   async refreshTokens(userId: string, refreshToken: string) {
     const user = await this.userService.getOneWithCredentialsBy('id', userId);
     if (!user) throw new ForbiddenException('No such user in DB');
 
-    if (!user.user_auth['refreshToken']) throw new ForbiddenException('Logged out. No refresh token in db');
+    if (!user.user_auth['refreshToken'])
+      throw new ForbiddenException('Logged out. No refresh token in db');
 
-    const refreshTokenMatches = await bcrypt.compare(refreshToken, user.user_auth['refreshToken']);
-    if (!refreshTokenMatches) throw new ForbiddenException(`Refresh tokens doesn't match.`);
+    const refreshTokenMatches = await bcrypt.compare(
+      refreshToken,
+      user.user_auth['refreshToken'],
+    );
+    if (!refreshTokenMatches)
+      throw new ForbiddenException(`Refresh tokens doesn't match.`);
 
-    const payload = { 
-      username: user.name, 
-      sub: user.id, 
+    const payload = {
+      username: user.name,
+      sub: user.id,
     };
     const tokens = await this.getTokens(payload);
     await this.updateRefreshToken(user.user_auth['id'], tokens.refresh_token);
@@ -138,8 +156,10 @@ export class AuthService {
   }
 
   async updateRefreshToken(userAuthId: string, refreshToken: string) {
-    let userAuth = await this.userAuthRepo.findOne({where: {id: userAuthId}})
+    let userAuth = await this.userAuthRepo.findOne({
+      where: { id: userAuthId },
+    });
     userAuth.refreshToken = refreshToken;
     return this.userAuthRepo.save(userAuth);
   }
-} 
+}
