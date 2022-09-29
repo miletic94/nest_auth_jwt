@@ -46,6 +46,7 @@ export class AuthController {
       @GetCurrentUser('sub') userId: string,
       @GetCurrentUser('refreshToken') refreshToken: string
     ) {
+      console.log({userId, refreshToken})
       return await this.authService.refreshTokens(userId, refreshToken)
     }
     

@@ -33,5 +33,15 @@ export class UserAuth extends BaseEntity  {
                 throw new InternalServerErrorException("Bycript failed to create hash", error.message)
             }
         }
+
+        if (this.refreshToken) {
+            try {
+                this.refreshToken = await bcrypt.hash(this.refreshToken, 10)
+                console.log({encrypted: this.refreshToken});
+            } catch(error) {
+                throw new InternalServerErrorException("Bycript failed to create hash", error.message)
+            }
+        }
+
     }
 }

@@ -90,7 +90,7 @@ export class AuthService {
     const payload: JwtPayload = { username: user.name, sub: user.id };
     const userAuthId = user.user_auth['id']
     const tokens = await this.getTokens(payload);
-    await this.updateRefreshTokenHash(userAuthId, tokens.refresh_token);
+    await this.updateRefreshToken(userAuthId, tokens.refresh_token);
     return tokens;
   }
 
@@ -126,30 +126,21 @@ export class AuthService {
     if (!user.user_auth['refreshToken']) throw new ForbiddenException('No refresh token in db');
 
     const refreshTokenMatches = await bcrypt.compare(refreshToken, user.user_auth['refreshToken']);
-
-    if (!refreshTokenMatches) throw new ForbiddenException('Access Denied');
+    console.log({refreshTokenMatches})
+    if (!refreshTokenMatches) throw new ForbiddenException(`Refresh tokens doesn't match.`);
 
     const payload = { 
       username: user.name, 
       sub: user.id, 
     };
     const tokens = await this.getTokens(payload);
-    await this.updateRefreshTokenHash(user.user_auth['id'], tokens.refresh_token);
+    await this.updateRefreshToken(user.user_auth['id'], tokens.refresh_token);
     return tokens;
   }
 
-  async updateRefreshTokenHash(userAuthId: string, refreshToken: string) {
-    const hash = await bcrypt.hash(refreshToken, 10);
-    await this.updateRefreshToken(userAuthId, hash);
-  }
-
   async updateRefreshToken(userAuthId: string, refreshToken: string) {
-
-    return this.userAuthRepo.update(
-      { id: userAuthId },
-      {
-        refreshToken,
-      }
-    )
+    let userAuth = await this.userAuthRepo.findOne({where: {id: userAuthId}})
+    userAuth.refreshToken = refreshToken;
+    return this.userAuthRepo.save(userAuth);
   }
 } 
