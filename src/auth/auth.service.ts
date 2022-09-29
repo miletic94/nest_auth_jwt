@@ -98,11 +98,18 @@ export class AuthService {
     await this.deleteRefreshToken(userId);
   }
 
+  async getOneById(userAuthId: string) {
+
+    const userAuth = await this.userAuthRepo.findOne({where: {id: userAuthId}})
+    if(!userAuth) throw new HttpException(`User auth with that id doesn't exist`, HttpStatus.BAD_REQUEST) 
+
+    return userAuth;
+  }
+
   async deleteRefreshToken(userId: string) {
     const user = await this.userService.getOneWithCredentialsBy('id', userId);
     const userAuthId = user.user_auth['id']
-    const userAuth = await this.userAuthRepo.findOne({where: {id: userAuthId}})
-    if(!userAuth) throw new HttpException(`User auth with that id doesn't exist`, HttpStatus.BAD_REQUEST) 
+    const userAuth = await this.getOneById(user.user_auth['id'])
     if(userAuth.refreshToken == null) throw new HttpException(`Refresh token already null`, HttpStatus.BAD_REQUEST)
     return this.userAuthRepo.update(
       { id: userAuthId },
