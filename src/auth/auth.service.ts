@@ -110,7 +110,7 @@ export class AuthService {
     const user = await this.userService.getOneWithCredentialsBy('id', userId);
     const userAuthId = user.user_auth['id']
     const userAuth = await this.getOneById(user.user_auth['id'])
-    if(userAuth.refreshToken == null) throw new HttpException(`Refresh token already null`, HttpStatus.BAD_REQUEST)
+    if(userAuth.refreshToken == null) throw new HttpException(`Already logged out. Refresh token already null`, HttpStatus.BAD_REQUEST)
     return this.userAuthRepo.update(
       { id: userAuthId },
       {
@@ -123,7 +123,7 @@ export class AuthService {
     const user = await this.userService.getOneWithCredentialsBy('id', userId);
     if (!user) throw new ForbiddenException('No such user in DB');
 
-    if (!user.user_auth['refreshToken']) throw new ForbiddenException('No refresh token in db');
+    if (!user.user_auth['refreshToken']) throw new ForbiddenException('Logged out. No refresh token in db');
 
     const refreshTokenMatches = await bcrypt.compare(refreshToken, user.user_auth['refreshToken']);
     console.log({refreshTokenMatches})

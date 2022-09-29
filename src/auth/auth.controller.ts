@@ -52,6 +52,7 @@ export class AuthController {
     
     @Post('auth/logout') 
     async logout(@GetCurrentUser('userId') userId: string) {
-      return await this.authService.deleteRefreshToken(userId)
+      await this.authService.deleteRefreshToken(userId)
+      return {message: 'User logged out.'}
     }
 }
