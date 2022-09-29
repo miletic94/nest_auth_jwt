@@ -134,15 +134,12 @@ export class AuthService {
 
   async refreshTokens(userId: string, refreshToken: string) {
     const user = await this.userService.getOneWithCredentialsBy('id', userId);
-    if (!user) throw new ForbiddenException('No such user in DB');
 
     if (!user.user_auth['refreshToken'])
       throw new ForbiddenException('Logged out. No refresh token in db');
 
-    const refreshTokenMatches = await bcrypt.compare(
-      refreshToken,
-      user.user_auth['refreshToken'],
-    );
+    const refreshTokenMatches = refreshToken === user.user_auth['refreshToken'];
+
     if (!refreshTokenMatches)
       throw new ForbiddenException(`Refresh tokens doesn't match.`);
 

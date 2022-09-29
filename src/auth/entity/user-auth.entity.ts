@@ -15,7 +15,6 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { User } from '../../user/entity/user.entity';
-import { MinLength } from 'class-validator';
 
 @Entity()
 export class UserAuth extends BaseEntity {
@@ -47,21 +46,6 @@ export class UserAuth extends BaseEntity {
           this.password.length < 60
             ? await bcrypt.hash(this.password, 10)
             : this.password;
-      } catch (error) {
-        throw new InternalServerErrorException(
-          'Bycript failed to create hash',
-          error.message,
-        );
-      }
-    }
-  }
-
-  @BeforeInsert()
-  @BeforeUpdate()
-  async hashRefreshTOken(): Promise<void> {
-    if (this.refreshToken) {
-      try {
-        this.refreshToken = await bcrypt.hash(this.refreshToken, 10);
       } catch (error) {
         throw new InternalServerErrorException(
           'Bycript failed to create hash',
