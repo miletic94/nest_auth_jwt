@@ -1,14 +1,8 @@
-import {
-  Controller,
-  Get,
-  Patch,
-  Delete,
-  UseGuards,
-  Body,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Patch, Delete, Body, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import { GetCurrentUser } from 'src/auth/decorator/get-current-user.decorator';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Public } from 'src/auth/decorator/public.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
 
@@ -34,5 +28,11 @@ export class UserController {
   @Delete('user')
   deleteUser(@GetCurrentUser('userId') userId: string) {
     return this.userService.delete(userId);
+  }
+
+  @Public()
+  @Get('test')
+  test(@Req() request: Request) {
+    return request.headers;
   }
 }
