@@ -93,7 +93,7 @@ export class AuthService {
   }
 
   async login(user: User, deviceId: string) {
-    const payload: JwtPayload = { username: user.name, sub: user.id };
+    const payload: JwtPayload = { sub: user.id, username: user.name };
     const tokens = await this.getTokens(payload);
     const refreshToken = await this.refreshTokenService.create(
       user,

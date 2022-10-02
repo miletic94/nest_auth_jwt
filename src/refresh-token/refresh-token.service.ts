@@ -11,15 +11,21 @@ export class RefreshTokenService {
     private refreshTokenRepo: Repository<RefreshToken>,
   ) {}
   async create(user: User, refrehToken: string, deviceId: string) {
-    try {
-      return await this.refreshTokenRepo.create({
-        value: refrehToken,
-        user,
-        device_id: deviceId,
-      });
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+    const deviceIdExists = await this.refreshTokenRepo.findOne({
+      where: { device_id: deviceId },
+    });
+    if (deviceIdExists)
+      throw new HttpException(
+        'User already logged in from this device',
+        HttpStatus.BAD_REQUEST,
+      );
+
+    let refreshTokenDB = this.refreshTokenRepo.create({
+      value: refrehToken,
+      user,
+      device_id: deviceId,
+    });
+    return await this.refreshTokenRepo.save(refreshTokenDB);
   }
 
   async findOneById(id: string) {

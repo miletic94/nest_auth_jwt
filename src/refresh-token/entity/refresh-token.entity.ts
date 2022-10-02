@@ -4,7 +4,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Generated,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -15,11 +14,11 @@ export class RefreshToken extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
-  device_id: string;
-
   @Column()
   value: string;
+
+  @Column({ unique: true })
+  device_id: string;
 
   @ManyToOne(() => User, (user) => user.refresh_token)
   user: User;
