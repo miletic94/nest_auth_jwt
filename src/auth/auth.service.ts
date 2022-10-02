@@ -13,6 +13,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/user/entity/user.entity';
 import { JwtPayload } from './interface/user-jwt-payload.interface';
+import { RefreshTokenService } from 'src/refresh-token/refresh-token.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly dataSource: DataSource,
+    private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
   async getTokens(payload: JwtPayload) {
@@ -90,17 +92,20 @@ export class AuthService {
     }
   }
 
-  async login(user: User) {
+  async login(user: User, deviceId: string) {
     const payload: JwtPayload = { username: user.name, sub: user.id };
-    const userAuthId = user.user_auth['id'];
     const tokens = await this.getTokens(payload);
-    await this.updateRefreshToken(userAuthId, tokens.refresh_token);
-    return tokens;
+    const refreshToken = await this.refreshTokenService.create(
+      user,
+      tokens.refresh_token,
+      deviceId,
+    );
+    return { ...tokens, device_id: refreshToken.device_id };
   }
 
-  async logout(userId: string) {
-    await this.deleteRefreshToken(userId);
-  }
+  // async logout(userId: string) {
+  //   await this.deleteRefreshToken(userId);
+  // }
 
   async getOneById(userAuthId: string) {
     const userAuth = await this.userAuthRepo.findOne({
@@ -115,48 +120,46 @@ export class AuthService {
     return userAuth;
   }
 
-  async deleteRefreshToken(userId: string) {
-    const user = await this.userService.getOneWithCredentialsBy('id', userId);
-    const userAuthId = user.user_auth['id'];
-    const userAuth = await this.getOneById(user.user_auth['id']);
-    if (userAuth.refreshToken == null)
-      throw new HttpException(
-        `Already logged out. Refresh token already null`,
-        HttpStatus.BAD_REQUEST,
-      );
-    return this.userAuthRepo.update(
-      { id: userAuthId },
-      {
-        refreshToken: null,
-      },
-    );
-  }
+  // Move to refresh-token.service
+  // async deleteRefreshToken(userId: string) {
+  //   const user = await this.userService.getOneWithCredentialsBy('id', userId);
+  //   const refreshTokenId = user.refresh_token.id;
+  //   const userAuth = await this.getOneById(user.user_auth['id']);
+  //   if (userAuth.refreshToken == null)
+  //     throw new HttpException(
+  //       `Already logged out. Refresh token already null`,
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   return this.userAuthRepo.update(
+  //     { id: userAuthId },
+  //     {
+  //       refreshToken: null,
+  //     },
+  //   );
+  // }
 
-  async refreshTokens(userId: string, refreshToken: string) {
-    const user = await this.userService.getOneWithCredentialsBy('id', userId);
+  // async refreshTokens(userId: string, refreshToken: string) {
+  //   const user = await this.userService.getOneWithCredentialsBy('id', userId);
 
-    if (!user.user_auth['refreshToken'])
-      throw new ForbiddenException('Logged out. No refresh token in db');
+  //   if (!user.user_auth['refreshToken'])
+  //     throw new ForbiddenException('Logged out. No refresh token in db');
 
-    const refreshTokenMatches = refreshToken === user.user_auth['refreshToken'];
+  //   const refreshTokenMatches = refreshToken === user.user_auth['refreshToken'];
 
-    if (!refreshTokenMatches)
-      throw new ForbiddenException(`Refresh tokens doesn't match.`);
+  //   if (!refreshTokenMatches)
+  //     throw new ForbiddenException(`Refresh tokens doesn't match.`);
 
-    const payload = {
-      username: user.name,
-      sub: user.id,
-    };
-    const tokens = await this.getTokens(payload);
-    await this.updateRefreshToken(user.user_auth['id'], tokens.refresh_token);
-    return tokens;
-  }
+  //   const payload = {
+  //     username: user.name,
+  //     sub: user.id,
+  //   };
+  //   const tokens = await this.getTokens(payload);
+  //   await this.updateRefreshToken(user.user_auth['id'], tokens.refresh_token);
+  //   return tokens;
+  // }
 
-  async updateRefreshToken(userAuthId: string, refreshToken: string) {
-    let userAuth = await this.userAuthRepo.findOne({
-      where: { id: userAuthId },
-    });
-    userAuth.refreshToken = refreshToken;
-    return this.userAuthRepo.save(userAuth);
-  }
+  //Move this function into refresh-token.service
+  // async updateRefreshToken(refreshTokenId: string, refreshToken: string) {
+  //   await this.refreshTokenService.update(refreshTokenId, refreshToken);
+  // }
 }

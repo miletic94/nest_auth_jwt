@@ -1,9 +1,11 @@
 import { UserAuth } from 'src/auth/entity/user-auth.entity';
+import { RefreshToken } from 'src/refresh-token/entity/refresh-token.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -22,6 +24,9 @@ export class User extends BaseEntity {
 
   @OneToOne(() => UserAuth, (userAuth) => userAuth.user)
   user_auth: string;
+
+  @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
+  refresh_token: RefreshToken;
 
   @CreateDateColumn({ type: 'timestamp' })
   created_date: Date;

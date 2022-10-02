@@ -24,9 +24,6 @@ export class UserAuth extends BaseEntity {
   @Column()
   password: string;
 
-  @Column({ nullable: true })
-  refreshToken: string;
-
   @OneToOne(() => User, (user) => user.user_auth, { onDelete: 'CASCADE' })
   @JoinColumn()
   user: User;

@@ -5,9 +5,15 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { UserModule } from './user/user.module';
 import { APP_GUARD } from '@nestjs/core';
+import { RefreshTokenModule } from './refresh-token/refresh-token.module';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(typeOrmConfig), UserModule, AuthModule],
+  imports: [
+    TypeOrmModule.forRoot(typeOrmConfig),
+    UserModule,
+    AuthModule,
+    RefreshTokenModule,
+  ],
   controllers: [],
   providers: [
     {

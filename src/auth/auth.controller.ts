@@ -44,22 +44,22 @@ export class AuthController {
     @Body() loginDto: LoginDto,
     @GetCurrentUser() user: User,
   ) {
-    return this.authService.login(user);
+    return this.authService.login(user, loginDto.deviceId);
   }
 
-  @Public()
-  @UseGuards(RefreshTokenGuard)
-  @Post('auth/refresh')
-  async refreshTokens(
-    @GetCurrentUser('sub') userId: string,
-    @GetCurrentUser('refreshToken') refreshToken: string,
-  ) {
-    return await this.authService.refreshTokens(userId, refreshToken);
-  }
+  // @Public()
+  // @UseGuards(RefreshTokenGuard)
+  // @Post('auth/refresh')
+  // async refreshTokens(
+  //   @GetCurrentUser('sub') userId: string,
+  //   @GetCurrentUser('refreshToken') refreshToken: string,
+  // ) {
+  //   return await this.authService.refreshTokens(userId, refreshToken);
+  // }
 
-  @Post('auth/logout')
-  async logout(@GetCurrentUser('userId') userId: string) {
-    await this.authService.deleteRefreshToken(userId);
-    return { message: 'User logged out.' };
-  }
+  // @Post('auth/logout')
+  // async logout(@GetCurrentUser('userId') userId: string) {
+  //   await this.authService.deleteRefreshToken(userId);
+  //   return { message: 'User logged out.' };
+  // }
 }
