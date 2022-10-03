@@ -32,6 +32,7 @@ export class UserService {
     const user = await this.userRepo
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.user_auth', 'user_auth')
+      .leftJoinAndSelect('user.refresh_token', 'refresh_token')
       .where({ [property]: value })
       .getOne();
     if (!user) {

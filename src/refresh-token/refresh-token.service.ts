@@ -66,6 +66,19 @@ export class RefreshTokenService {
     return await this.refreshTokenRepo.save(refreshTokenDB);
   }
 
+  async findOneById(id: string) {
+    const refreshTokenDB = await this.refreshTokenRepo.findOne({
+      where: { id },
+    });
+    console.log({ refreshTokenDB });
+    if (!refreshTokenDB)
+      throw new HttpException(
+        'Refresh token not found',
+        HttpStatus.BAD_REQUEST,
+      );
+    return refreshTokenDB;
+  }
+
   async findOneByRefreshToken(refreshToken: string) {
     const refreshTokenDB = await this.refreshTokenRepo.findOne({
       where: { value: refreshToken },
@@ -102,8 +115,9 @@ export class RefreshTokenService {
     return tokens;
   }
 
-  async delete(id: string) {
-    await this.refreshTokenRepo.delete(id);
-    return { message: 'Refresh token deleted' };
+  async deleteRefreshToken(refreshTokenId: string) {
+    const refreshToken = await this.findOneById(refreshTokenId);
+    console.log({ refreshTokenId });
+    return await this.refreshTokenRepo.delete({ id: refreshToken.id });
   }
 }

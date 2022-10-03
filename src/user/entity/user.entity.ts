@@ -26,7 +26,7 @@ export class User extends BaseEntity {
   user_auth: string;
 
   @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
-  refresh_token: RefreshToken;
+  refresh_token: RefreshToken[];
 
   @CreateDateColumn({ type: 'timestamp' })
   created_date: Date;

@@ -72,9 +72,17 @@ export class AuthService {
     return { ...tokens, device_id: refreshToken.device_id };
   }
 
-  // async logout(userId: string) {
-  //   await this.deleteRefreshToken(userId);
-  // }
+  async logout(userId: string, deviceId: string) {
+    const user = await this.userService.getOneWithCredentialsBy('id', userId);
+    // Rethink
+    const refreshToken = user.refresh_token.find(
+      (token) => token.device_id === deviceId,
+    );
+    if (!refreshToken)
+      throw new HttpException('Device id not found', HttpStatus.BAD_REQUEST);
+    // =========
+    await this.refreshTokenService.deleteRefreshToken(refreshToken.id);
+  }
 
   async getOneById(userAuthId: string) {
     const userAuth = await this.userAuthRepo.findOne({
@@ -88,22 +96,4 @@ export class AuthService {
 
     return userAuth;
   }
-
-  // Move to refresh-token.service
-  // async deleteRefreshToken(userId: string) {
-  //   const user = await this.userService.getOneWithCredentialsBy('id', userId);
-  //   const refreshTokenId = user.refresh_token.id;
-  //   const userAuth = await this.getOneById(user.user_auth['id']);
-  //   if (userAuth.refreshToken == null)
-  //     throw new HttpException(
-  //       `Already logged out. Refresh token already null`,
-  //       HttpStatus.BAD_REQUEST,
-  //     );
-  //   return this.userAuthRepo.update(
-  //     { id: userAuthId },
-  //     {
-  //       refreshToken: null,
-  //     },
-  //   );
-  // }
 }

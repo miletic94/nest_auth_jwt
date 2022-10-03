@@ -14,6 +14,7 @@ import { AuthService } from './auth.service';
 import { GetCurrentUser } from './decorator/get-current-user.decorator';
 import { Public } from './decorator/public.decorator';
 import { LoginDto } from './dto/login.dto';
+import { LogoutDto } from './dto/logout.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 
@@ -46,9 +47,12 @@ export class AuthController {
     return this.authService.login(user, loginDto.deviceId);
   }
 
-  // @Post('auth/logout')
-  // async logout(@GetCurrentUser('userId') userId: string) {
-  //   await this.authService.deleteRefreshToken(userId);
-  //   return { message: 'User logged out.' };
-  // }
+  @Post('auth/logout')
+  async logout(
+    @GetCurrentUser('userId') userId: string,
+    @Body() logoutDto: LogoutDto,
+  ) {
+    await this.authService.logout(userId, logoutDto.deviceId);
+    return { message: 'User logged out.' };
+  }
 }
