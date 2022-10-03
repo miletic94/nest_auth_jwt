@@ -16,7 +16,6 @@ import { Public } from './decorator/public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { RefreshTokenGuard } from './guards/refresh-token.guard';
 
 @ApiTags('Auth')
 @ApiBearerAuth()
@@ -46,16 +45,6 @@ export class AuthController {
   ) {
     return this.authService.login(user, loginDto.deviceId);
   }
-
-  // @Public()
-  // @UseGuards(RefreshTokenGuard)
-  // @Post('auth/refresh')
-  // async refreshTokens(
-  //   @GetCurrentUser('sub') userId: string,
-  //   @GetCurrentUser('refreshToken') refreshToken: string,
-  // ) {
-  //   return await this.authService.refreshTokens(userId, refreshToken);
-  // }
 
   // @Post('auth/logout')
   // async logout(@GetCurrentUser('userId') userId: string) {

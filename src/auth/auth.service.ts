@@ -10,7 +10,6 @@ import { DataSource, Repository } from 'typeorm';
 import { RegisterDto } from './dto/register.dto';
 import { UserAuth } from './entity/user-auth.entity';
 import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/user/entity/user.entity';
 import { JwtPayload } from './interface/user-jwt-payload.interface';
 import { RefreshTokenService } from 'src/refresh-token/refresh-token.service';
@@ -20,39 +19,9 @@ export class AuthService {
   constructor(
     @InjectRepository(UserAuth) private userAuthRepo: Repository<UserAuth>,
     private readonly userService: UserService,
-    private readonly jwtService: JwtService,
     private readonly dataSource: DataSource,
     private readonly refreshTokenService: RefreshTokenService,
   ) {}
-
-  async getTokens(payload: JwtPayload) {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(
-        {
-          sub: payload.sub,
-          name: payload.username,
-        },
-        {
-          secret: process.env.JWT_ACCESS_TOKEN_SECRET,
-          expiresIn: process.env.JWT_ACCESS_TOKEN_EXP_TIME,
-        },
-      ),
-      this.jwtService.signAsync(
-        {
-          sub: payload.sub,
-          name: payload.username,
-        },
-        {
-          secret: process.env.JWT_REFRESH_TOKEN_SECRET,
-          expiresIn: process.env.JWT_REFRESH_TOKEN_EXP_TIME,
-        },
-      ),
-    ]);
-    return {
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    };
-  }
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userService.getOneWithCredentialsBy('email', email);
@@ -94,7 +63,7 @@ export class AuthService {
 
   async login(user: User, deviceId: string) {
     const payload: JwtPayload = { sub: user.id, username: user.name };
-    const tokens = await this.getTokens(payload);
+    const tokens = await this.refreshTokenService.getTokens(payload);
     const refreshToken = await this.refreshTokenService.create(
       user,
       tokens.refresh_token,
@@ -136,30 +105,5 @@ export class AuthService {
   //       refreshToken: null,
   //     },
   //   );
-  // }
-
-  // async refreshTokens(userId: string, refreshToken: string) {
-  //   const user = await this.userService.getOneWithCredentialsBy('id', userId);
-
-  //   if (!user.user_auth['refreshToken'])
-  //     throw new ForbiddenException('Logged out. No refresh token in db');
-
-  //   const refreshTokenMatches = refreshToken === user.user_auth['refreshToken'];
-
-  //   if (!refreshTokenMatches)
-  //     throw new ForbiddenException(`Refresh tokens doesn't match.`);
-
-  //   const payload = {
-  //     username: user.name,
-  //     sub: user.id,
-  //   };
-  //   const tokens = await this.getTokens(payload);
-  //   await this.updateRefreshToken(user.user_auth['id'], tokens.refresh_token);
-  //   return tokens;
-  // }
-
-  //Move this function into refresh-token.service
-  // async updateRefreshToken(refreshTokenId: string, refreshToken: string) {
-  //   await this.refreshTokenService.update(refreshTokenId, refreshToken);
   // }
 }
