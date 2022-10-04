@@ -1,12 +1,10 @@
 import {
   Controller,
   Post,
-  Delete,
   Body,
   HttpException,
   HttpStatus,
   UseGuards,
-  Request,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { User } from 'src/user/entity/user.entity';
@@ -39,11 +37,7 @@ export class AuthController {
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('auth/login')
-  login(
-    @Request() req: Request,
-    @Body() loginDto: LoginDto,
-    @GetCurrentUser() user: User,
-  ) {
+  login(@Body() loginDto: LoginDto, @GetCurrentUser() user: User) {
     return this.authService.login(user, loginDto.deviceId);
   }
 
